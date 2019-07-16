@@ -1,0 +1,23 @@
+name: devclose-checker
+version: 1.0.0
+
+authors:
+  - langered <denis.langer@sap.com>
+
+description: |
+  Check the devclose status of a repository according to the description
+
+dependencies:
+  admiral:
+    github: jwaldrip/admiral.cr
+
+development_dependencies:
+  mocks:
+    github: waterlink/mocks.cr
+    version: ~> 0.9
+  coverage:
+    github: anykeyh/crystal-coverage
+  webmock:
+    github: manastech/webmock.cr
+    branch: master
+# license: MIT

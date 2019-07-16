@@ -1,0 +1,5 @@
+shard.lock
+lib/
+bin/
+*.dwarf
+devclose_config.yml
