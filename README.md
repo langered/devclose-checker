@@ -1,5 +1,7 @@
 # Devclose-Checker
 
+[![Build Status](https://travis-ci.org/langered/devclose-checker.svg?branch=master)](https://travis-ci.org/langered/devclose-checker)
+
 This tool provides a cli and [bitbar](https://github.com/matryer/bitbar)-plugin to check the devclose of any repository which has it defined in its description.
 This tool will look for a keyword in the description and interprets the devclose.
 
