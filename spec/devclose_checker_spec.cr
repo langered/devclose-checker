@@ -3,6 +3,7 @@ require "webmock"
 require "../src/devclose_checker"
 
 REPO_INFO_ENDPOINT = "https://api.github.com/repos/langered/devclose-checker"
+REPO_INFO_ENDPOINT_WITH_BASIC_AUTH = "https://user:token@api.github.com/repos/langered/devclose-checker"
 REPO_URL = "https://github.com/langered/devclose-checker"
 INVALID_ENDPOINT = "https://github.com/langered/invalid-endpoint"
 
@@ -10,6 +11,11 @@ OPEN_RESPONSE_BODY = "{
   \"id\": 123,
   \"html_url\": \"#{REPO_URL}\",
   \"description\": \"Open for dev\"
+}"
+OPEN_RESPONSE_BODY_WITH_AUTH = "{
+  \"id\": 123,
+  \"html_url\": \"#{REPO_URL}\",
+  \"description\": \"Open for dev with auth\"
 }"
 CLOSED_RESPONSE_BODY = "{
   \"id\": 124,
@@ -37,6 +43,25 @@ describe "Dev close" do
     tempfile.delete
   end
 
+  context "when env with credentials is set" do
+    it "uses basic auth to call the api endpoint" do
+      ENV["GITHUB_USER"] = "user"
+      ENV["GITHUB_TOKEN"] = "token"
+
+      WebMock.reset
+      WebMock.stub(:get, REPO_INFO_ENDPOINT_WITH_BASIC_AUTH).
+      to_return(status: 200, body: OPEN_RESPONSE_BODY_WITH_AUTH)
+
+      expected_info = Information.new("open", REPO_URL, OPEN_RESPONSE_BODY_WITH_AUTH, 200, tempfile.path).to_json
+      returned_info = dc_checker.info
+
+      information_is_equal(returned_info, expected_info)
+
+      ENV.delete("GITHUB_USER")
+      ENV.delete("GITHUB_TOKEN")
+    end
+  end
+
   context "when dev is open" do
     Spec.before_each do
       WebMock.reset
@@ -45,7 +70,7 @@ describe "Dev close" do
     end
 
     it "returns open dev-close as json" do
-      expected_info = Information.new("open", REPO_URL, 200, tempfile.path).to_json
+      expected_info = Information.new("open", REPO_URL, OPEN_RESPONSE_BODY, 200, tempfile.path).to_json
       returned_info = dc_checker.info
 
       information_is_equal(returned_info, expected_info)
@@ -81,7 +106,7 @@ describe "Dev close" do
     end
 
     it "returns closed dev-close as json" do
-      expected_info = Information.new("closed", REPO_URL, 200, tempfile.path).to_json
+      expected_info = Information.new("closed", REPO_URL, CLOSED_RESPONSE_BODY, 200, tempfile.path).to_json
       returned_info = dc_checker.info
 
       information_is_equal(returned_info, expected_info)
@@ -115,8 +140,9 @@ describe "Dev close" do
       WebMock.stub(:get, REPO_INFO_ENDPOINT).
       to_return(status: 200, body: NO_DESCRIPTION_RESPONSE_BODY)
     end
+
     it "returns unkown dev-close as json" do
-      expected_info = Information.new("unknown", REPO_URL, 200, tempfile.path).to_json
+      expected_info = Information.new("unknown", REPO_URL, NO_DESCRIPTION_RESPONSE_BODY, 200, tempfile.path).to_json
       returned_info = dc_checker.info
 
       information_is_equal(returned_info, expected_info)
@@ -152,7 +178,7 @@ describe "Dev close" do
     end
 
     it "returns that repository is unavailable as json" do
-      expected_info = Information.new("unavailable", REPO_INFO_ENDPOINT, 503, tempfile.path).to_json
+      expected_info = Information.new("unavailable", REPO_INFO_ENDPOINT, "", 503, tempfile.path).to_json
       returned_info = dc_checker.info
 
       information_is_equal(returned_info, expected_info)
@@ -193,7 +219,7 @@ describe "Dev close" do
     end
 
     it "returns unkown dev-close as json" do
-      expected_info = Information.new("unavailable", INVALID_ENDPOINT, 404, tempfile.path).to_json
+        expected_info = Information.new("unavailable", INVALID_ENDPOINT, "{}", 404, tempfile.path).to_json
       returned_info = dc_checker.info
 
       information_is_equal(returned_info, expected_info)
@@ -228,6 +254,7 @@ def information_is_equal(returned_info, expected_info)
 
   returned_info_json["dev_close"].should eq(expected_info_json["dev_close"])
   returned_info_json["repo_url"].should eq(expected_info_json["repo_url"])
+  returned_info_json["response"].should eq(expected_info_json["response"])
   returned_info_json["status_code"].should eq(expected_info_json["status_code"])
   returned_info_json["config_file_path"].should eq(expected_info_json["config_file_path"])
 end

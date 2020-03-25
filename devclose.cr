@@ -2,8 +2,14 @@ require "./src/devclose_checker"
 require "admiral"
 
 class Devclose < Admiral::Command
-  define_help description: "CLI for checking dev close"
-  define_version "1.0.0",
+  define_help description: <<-STRING
+  CLI to check devclose
+  Basic auth env vars:
+  'GITHUB_USER'
+  'GITHUB_TOKEN'
+  STRING
+
+  define_version "1.1.0",
               short: v
   define_flag json : Bool,
               description: "Return full dev close information as json",
